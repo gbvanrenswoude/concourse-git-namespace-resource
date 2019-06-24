@@ -35,6 +35,17 @@ jobs:
     trigger: true
 ```
 
+----
+## Behavior
+
+### `check`:
+Check for a change in the project set. Version tracking is done by hashing the list of all projects.
+
+### `in`:
+Fetches the projects in projects.json. Optionally clone all projects under their project name.
+
+### `out`:
+Does nothing. (for now)
 
 ----
 ### Source Configuration
@@ -47,14 +58,7 @@ jobs:
 * `clone`: *Optional.* Defaults to false. Allowed values: `true` and `false`. Clones in all when set to `true`. Make sure you have permissions and access to do so.
 
 
-----
-## Behavior
 
-### `check`: Check for a change in the project set. Version tracking is done by hashing the list of all projects.
-
-### `in`: Fetches the projects in projects.json. Optionally clone all projects under their project name.
-
-### `out`: Does nothing. (for now)
 
 
 
