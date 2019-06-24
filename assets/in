@@ -61,6 +61,8 @@ if [ $CLONE == "true" ]; then
   done < "$FILENAME"
 fi
 
+rm tmp.json
+
 metadata="{name: \"projects\", value: \"[${PROJECTLIST}]\"}"
 jq -n "{
   version: {version: $(echo $VERSION | jq -R .)},
