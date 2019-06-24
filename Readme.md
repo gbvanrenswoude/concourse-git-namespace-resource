@@ -4,7 +4,7 @@ A Concourse git namespace resource that returns all projects in a namespace and 
 
 ## Use
 docker pull gbvanrenswoude/concourse-git-namespace-resource:latest
-versions_tagged: 0.0.1
+versions_tagged: 0.0.3
 
 ## Installing
 

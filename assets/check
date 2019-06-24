@@ -43,8 +43,5 @@ VERSION="$(md5sum projects.json| cut -d ' ' -f 1)"
 
 rm tmp.json
 
-metadata="{name: \"projects\", value: \"[${PROJECTLIST}]\"}"
-jq -n "{
-  version: {version: $(echo $VERSION | jq -R .)},
-  metadata: [$metadata]
-}" >&3
+result="$(jq -n "[{ \"version\": \"$VERSION\" }]")"
+echo "$result" | jq -s add  >&3

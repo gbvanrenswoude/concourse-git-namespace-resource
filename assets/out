@@ -1,1 +1,3 @@
-# dummy
+#!/bin/bash
+
+echo '{"version":{"version":"none"}}'
