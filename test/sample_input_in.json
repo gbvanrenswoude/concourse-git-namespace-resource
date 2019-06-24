@@ -1,0 +1,13 @@
+{"source":{
+  "namespace": "sss",
+  "basepath": "https://gitlab.com/",
+  "token": "zzzz",
+  "searchparam": "zzzz"
+},
+"params": {
+  "clone": "true"
+},
+  "version":{
+    "version":"1"
+    }
+  }

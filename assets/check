@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -ex
+
+# make sure to be in the resource dir
+cd "${1}"
+
+exec 3>&1 # make stdout available as fd 3 for the result
+exec 1>&2 # redirect all output to stderr for logging
+
+set +x
+
+payload=$(mktemp /tmp/resource-in.XXXXXX)
+cat > "${payload}" <&0
+### Version Configuration, unsused for now...
+CURRENT_VERSION=$(jq -r '.version.version' < $payload || true)
+### Source Configuration
+NAMESPACE="$(jq -r '.source.namespace' < "${payload}")"
+BASE_PATH="$(jq -r '.source.basepath' < "${payload}")"
+PROJECT_SEARCH_PARAM="$(jq -r '.source.searchparam // ""' < "${payload}")"
+GITLAB_PRIVATE_TOKEN="$(jq -r '.source.token' < "${payload}")"
+
+
+PROJECT_SELECTION="select(.namespace.name == \"$NAMESPACE\")"
+PROJECT_PROJECTION="{ "id": .id,  "path": .path, "git": .ssh_url_to_repo }"
+
+if [ -z "$GITLAB_PRIVATE_TOKEN" ]; then
+    echo "Please set the variable source.token"
+    exit 1
+fi
+
+FILENAME="projects.json"
+touch $FILENAME
+
+curl -s "${BASE_PATH}api/v4/projects?private_token=$GITLAB_PRIVATE_TOKEN&search=$PROJECT_SEARCH_PARAM&per_page=999" \
+    | jq --raw-output --compact-output ".[] | $PROJECT_SELECTION | $PROJECT_PROJECTION" > "$FILENAME"
+
+PROJECTLIST="$(cat projects.json | jq .path)"
+PROJECTLIST=$(echo "${PROJECTLIST//\"}") && echo $PROJECTLIST > tmp.json
+tr ' ' ',' < tmp.json > projectlist.json
+PROJECTLIST="$(cat projectlist.json)"
+VERSION="$(md5sum projects.json| cut -d ' ' -f 1)"
+
+metadata="{name: \"projects\", value: \"[${PROJECTLIST}]\"}"
+jq -n "{
+  version: {version: $(echo $VERSION | jq -R .)},
+  metadata: [$metadata]
+}" >&3
