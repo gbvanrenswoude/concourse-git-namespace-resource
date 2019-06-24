@@ -80,9 +80,7 @@ and out
 cat ../test/sample_input_out.json | ./check
 cat ../test/sample_input_out.json | ./check 2> /dev/null
 ```
-Make sure you have python3 and your dependencies installed if you run the code directly and not via the Docker image.
 
-If you run the Docker image, comment in the ENV vars in the Dockerfile bc corporate. Run the docker image and pass the sample input to stdin
 ```
 docker build -t bob .
 docker run --rm -it -v ~/.aws:/root/.aws bob
