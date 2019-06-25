@@ -42,7 +42,7 @@ jobs:
 Check for a change in the project set. Version tracking is done by hashing the list of all projects.
 
 ### `in`:
-Fetches the projects in projects.json. Optionally clone all projects under their project name.
+Fetches the projects and deliver them in json format in projects.json and lowercase name in projectlist.txt. Optionally clone in all projects under their project name.
 
 ### `out`:
 Does nothing. (for now)
