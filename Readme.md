@@ -91,3 +91,8 @@ cd /opt/resource && cat ../test/sample_input_in.json | ./in './'
 cd /opt/resource && cat ../test/sample_input_check.json | ./check './'
 ```
 ----
+
+
+### TODOs
+- handle exceptions better, especially around the namespace selection and curl
+- return the lists in better format.
