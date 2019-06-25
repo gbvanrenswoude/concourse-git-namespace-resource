@@ -23,7 +23,7 @@ GITLAB_PRIVATE_TOKEN="$(jq -r '.source.token' < "${payload}")"
 CLONE="$(jq -r '.params.clone // "false"' < "${payload}")"
 
 PROJECT_SELECTION="select(.namespace.name == \"$NAMESPACE\")"
-PROJECT_PROJECTION="{ "id": .id,  "path": .path, "git": .ssh_url_to_repo }"
+PROJECT_PROJECTION="{ "id": .id,  "path": .path, "path_with_namespace": .path_with_namespace,  "git": .ssh_url_to_repo }"
 
 if [ -z "$GITLAB_PRIVATE_TOKEN" ]; then
     echo "Please set the variable source.token"
