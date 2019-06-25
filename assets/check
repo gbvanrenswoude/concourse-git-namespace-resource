@@ -42,7 +42,7 @@ tr ' ' ',' < tmp.json > projectlist.txt
 PROJECTLIST="$(cat projectlist.txt)"
 VERSION="$(md5sum projects.json| cut -d ' ' -f 1)"
 
-rm tmp.json
+rm tmp.json && rm projects.json && rm projectlist.txt
 
 result="$(jq -n "[{ \"version\": \"$VERSION\", \"metadata\": \"$PROJECTLIST\", }]")"
 echo "$result" | jq -s add  >&3

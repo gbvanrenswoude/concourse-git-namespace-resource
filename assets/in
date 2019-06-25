@@ -64,5 +64,12 @@ fi
 
 rm tmp.json
 
+jq --slurp 'map(select(. >= 2))' projects.json > cleanup.json
+sed -i '1s/^/{"projects":\n/' cleanup.json
+echo '}' >> cleanup.json
+rm projects.json && mv cleanup.json projects.json
+echo "Returning following projects.json:"
+jq . projects.json
+
 result="$(jq -n "{version:{version:\"$VERSION\"}, metadata: [{name: \"projects\", value: \"$PROJECTLIST\"}]}")"
 echo "$result" | jq -s add  >&3
