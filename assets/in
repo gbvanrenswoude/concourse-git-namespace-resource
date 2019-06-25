@@ -5,9 +5,11 @@ set -ex
 # make sure to be in the resource dir
 cd "${1}"
 
+echo "log"
 exec 3>&1 # make stdout available as fd 3 for the result
+echo "log"
 exec 1>&2 # redirect all output to stderr for logging
-
+echo "log"
 set +x
 
 payload=$(mktemp /tmp/resource-in.XXXXXX)
@@ -33,9 +35,9 @@ fi
 
 FILENAME="projects.json"
 touch $FILENAME
-
-curl -s "${BASE_PATH}api/v4/projects?private_token=$GITLAB_PRIVATE_TOKEN&search=$PROJECT_SEARCH_PARAM&per_page=999" \
-    | jq --raw-output --compact-output ".[] | $PROJECT_SELECTION | $PROJECT_PROJECTION" > "$FILENAME"
+echo "Fetching projects in ${BASE_PATH} for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
+curl -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=999" \
+    | jq --raw-output --compact-output ".[] | ${PROJECT_SELECTION} | ${PROJECT_PROJECTION}" > "$FILENAME"
 
 PROJECTLIST="$(cat projects.json | jq .path)"
 PROJECTLIST=$(echo "${PROJECTLIST//\"}") && echo $PROJECTLIST > tmp.json

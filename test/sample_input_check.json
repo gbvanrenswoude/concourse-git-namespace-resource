@@ -1,8 +1,8 @@
 {"source":{
-  "namespace": "cool",
-  "basepath": "https://gitlab.com/",
-  "token": "sometoken",
-  "searchparam": "tt"
+  "namespace": "zz",
+  "basepath": "https://zz.com//",
+  "token": "zzz",
+  "searchparam": "zz"
 },
   "version":{
     "version":"1"

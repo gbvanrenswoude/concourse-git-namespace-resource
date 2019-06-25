@@ -1,8 +1,8 @@
 {"source":{
-  "namespace": "sss",
-  "basepath": "https://gitlab.com/",
-  "token": "zzzz",
-  "searchparam": "zzzz"
+  "namespace": "zz",
+  "basepath": "https://zz.com//",
+  "token": "zzz",
+  "searchparam": "zz"
 },
 "params": {
   "clone": "true"
