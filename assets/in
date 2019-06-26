@@ -33,6 +33,8 @@ fi
 FILENAME="projects.json"
 touch $FILENAME
 echo "Fetching projects in ${BASE_PATH} for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
+echo "Using following curl:"
+echo "curl -k \"${BASE_PATH}api/v4/projects?private_token=YOURTOKEN&search=${PROJECT_SEARCH_PARAM}&per_page=999\" | jq --raw-output --compact-output \".[] | ${PROJECT_SELECTION} | ${PROJECT_PROJECTION}\" > \"$FILENAME\""
 curl -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=999" \
     | jq --raw-output --compact-output ".[] | ${PROJECT_SELECTION} | ${PROJECT_PROJECTION}" > "$FILENAME"
 
