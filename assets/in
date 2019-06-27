@@ -52,7 +52,6 @@ if [ $DRIVER == "projects" ]; then
   rm full.json
 
 elif [ $DRIVER == "groups" ]; then
-  echo "meuk = $EXTENDEDQUERY"
   if  [[ "$EXTENDEDQUERY" != "null" ]];  then
     echo "extended query set, using it.."
     curl -k "${BASE_PATH}api/v4/groups/${EXTENDEDQUERY}?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
