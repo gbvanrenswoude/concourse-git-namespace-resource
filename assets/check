@@ -15,34 +15,70 @@ cat > "${payload}" <&0
 ### Version Configuration, unsused for now...
 CURRENT_VERSION=$(jq -r '.version.version' < $payload || true)
 ### Source Configuration
+DRIVER="$(jq -r '.source.driver // "projects"' < "${payload}")"
+GITLAB_PRIVATE_TOKEN="$(jq -r '.source.token' < "${payload}")"
+PROJECT_SEARCH_PARAM="$(jq -r '.source.searchparam // ""' < "${payload}")"
+### projects driver
 NAMESPACE="$(jq -r '.source.namespace' < "${payload}")"
 BASE_PATH="$(jq -r '.source.basepath' < "${payload}")"
-PROJECT_SEARCH_PARAM="$(jq -r '.source.searchparam // ""' < "${payload}")"
-GITLAB_PRIVATE_TOKEN="$(jq -r '.source.token' < "${payload}")"
-
-
-PROJECT_SELECTION="select(.namespace.name == \"$NAMESPACE\")"
-PROJECT_PROJECTION="{ "id": .id,  "path": .path, "git": .ssh_url_to_repo }"
+### groups driver
+GROUPNAME="$(jq -r '.source.groupname' < "${payload}")"
+SUBGROUPNAME="$(jq -r '.source.subgroupname' < "${payload}")"
+EXTENDEDQUERY="$(jq -r '.source.fullquery' < "${payload}")"
+INCLSGP="$(jq -r '.source.include_subgroup_projects // "true"' < "${payload}")"
 
 if [ -z "$GITLAB_PRIVATE_TOKEN" ]; then
     echo "Please set the variable source.token"
     exit 1
 fi
 
+if [ $INCLSGP == "true" ]; then
+    INCLSGP="&include_subgroups=true"
+else
+    echo "Not including subgroup projects"
+    INCLSGP=""
+fi
+
 FILENAME="projects.json"
 touch $FILENAME
 
-echo "Fetching projects in ${BASE_PATH} for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
-curl -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=999" \
-    | jq --raw-output --compact-output ".[] | ${PROJECT_SELECTION} | ${PROJECT_PROJECTION}" > "$FILENAME"
+if [ $DRIVER == "projects" ]; then
+  echo "Fetching projects in ${BASE_PATH} with projects api for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
+  curl -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=9999" | jq . > full.json
+  cat full.json | jq 'map(select(.namespace.name == "ecs"))' > $FILENAME
+  rm full.json
 
-PROJECTLIST="$(cat projects.json | jq .path)"
-PROJECTLIST=$(echo "${PROJECTLIST//\"}") && echo $PROJECTLIST > tmp.json
-tr ' ' ',' < tmp.json > projectlist.txt
-PROJECTLIST="$(cat projectlist.txt)"
+elif [ $DRIVER == "groups" ]; then
+  echo "meuk = $EXTENDEDQUERY"
+  if  [[ "$EXTENDEDQUERY" != "null" ]];  then
+    echo "extended query set, using it.."
+    curl -k "${BASE_PATH}api/v4/groups/${EXTENDEDQUERY}?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
+
+  elif [[ "$SUBGROUPNAME" != "null" ]];  then
+    echo "subgroupname set, using it.."
+    curl -k "${BASE_PATH}api/v4/groups/${GROUPNAME}%2f${SUBGROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
+
+  elif [[  "$GROUPNAME" != "null" ]];  then
+    echo "groupname passed, querying it out"
+    curl -k "${BASE_PATH}api/v4/groups/${GROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
+
+  else
+    echo "Please set the needed group driver variables"
+    exit 1
+  fi
+
+else
+  echo "Please set a valid gitlab api driver, projects or groups"
+  exit 1
+fi
+
+sed -i '1s/^/{"projects":\n/' projects.json
+echo '}' >> projects.json
 VERSION="$(md5sum projects.json| cut -d ' ' -f 1)"
-
-rm tmp.json && rm projects.json && rm projectlist.txt
+jq . projects.json | python3 -c 'import sys, yaml, json; j=json.loads(sys.stdin.read()); print(yaml.safe_dump(j))' > projects.yml
+cat projects.json | jq .projects[].path > projectlist.txt
+sed -i 's/"//g' projectlist.txt
+PROJECTLIST=$(tr '\n' ' ' < projectlist.txt)
 
 result="$(jq -n "[{ \"version\": \"$VERSION\", \"metadata\": \"$PROJECTLIST\", }]")"
 echo "$result" | jq -s add  >&3

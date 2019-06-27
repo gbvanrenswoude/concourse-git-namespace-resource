@@ -1,10 +1,11 @@
-# Concourse git namespace resource
+# Concourse gitlab namespace/groups resource
 
-A Concourse git namespace resource that returns all projects in a namespace and can optionally clone them in.
+A Concourse gitlab namespace/groups resource that returns all projects in a namespace and can optionally clone them in.
+Supports 2 gitlab endpoints `projects` and `groups`.
 
 ## Use
-docker pull gbvanrenswoude/concourse-git-namespace-resource:latest
-versions_tagged: 0.0.3
+docker pull gbvanrenswoude/concourse-gitlab-namespace-resource:latest
+versions_tagged: 0.0.1
 
 ## Installing
 
@@ -16,7 +17,7 @@ resource_types:
 - name: git-group
   type: docker-image
   source:
-    repository: gbvanrenswoude/concourse-git-namespace-resource
+    repository: gbvanrenswoude/concourse-gitlab-namespace-resource:0.0.1
 
 resources:
 - name: some-group
@@ -49,17 +50,23 @@ Does nothing. (for now)
 
 ----
 ### Source Configuration
-* `namespace`: *Required.* Specify namespace. (for example group name)
+* `driver`: *Optional.* `groups` or `projects` supported. Defaults to projects. Specifies which gitlab api endpoint to use.
 * `basepath`: *Required.* Specify base path of gitlab install
 * `token`: *Required.* Specify GITLAB_PRIVATE_TOKEN.
 * `searchparam`: *Optional.* Specify string to match projects to.
 
+#### projects specific
+* `namespace`: *Required.* Specify namespace. (for example group name)
+
+#### groups specific
+* `groupname`: *Optional.* Specify groupname
+* `include_subgroup_projects`: *Optional.* `true` or `false`. Defaults to `true`
+* `subgroupname`: *Optional.* Specify subgroupname
+* `fullquery`: *Optional.* Overrides both other params for the groups driver. Allows you to specify own extended groups api path to query out. Use when wanting projects from subgroups of subgroups e.d.
+
+
 ### Parameters
-* `clone`: *Optional.* Defaults to false. Allowed values: `true` and `false`. Clones in all when set to `true`. Make sure you have permissions and access to do so.
-
-
-
-
+* `clone`: *Optional.* Defaults to false. Allowed values: `true` and `false`. Clones in all when set to `true`. Make sure you have permissions and access to do so ;)
 
 
 -----
@@ -87,12 +94,11 @@ docker run --rm -it -v ~/.aws:/root/.aws bob
 ```
 When in bob
 ```
-cd /opt/resource && cat ../test/sample_input_in.json | ./in './'
-cd /opt/resource && cat ../test/sample_input_check.json | ./check './'
+cd /opt/resource && cat ../test/sample_input_in_groups.json | ./in './'
+cd /opt/resource && cat ../test/sample_input_check_groups.json | ./check './'
 ```
 ----
 
 
 ### TODOs
 - handle exceptions better, especially around the namespace selection and curl
-- return the lists in better format.
