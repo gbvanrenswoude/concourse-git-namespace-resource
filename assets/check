@@ -45,7 +45,7 @@ touch $FILENAME
 if [ $DRIVER == "projects" ]; then
   echo "Fetching projects in ${BASE_PATH} with projects api for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
   curl -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=9999" | jq . > full.json
-  cat full.json | jq 'map(select(.namespace.name == "ecs"))' > $FILENAME
+  cat full.json | jq "map(select(.namespace.name == \"${NAMESPACE}\"))" > $FILENAME
   rm full.json
 
 elif [ $DRIVER == "groups" ]; then
