@@ -4,8 +4,10 @@ A Concourse gitlab namespace/groups resource that returns all projects in a name
 Supports 2 gitlab endpoints `projects` and `groups`.
 
 ## Use
-docker pull gbvanrenswoude/concourse-gitlab-namespace-resource:latest
-versions_tagged: 0.0.1
+docker pull gbvanrenswoude/concourse-gitlab-namespace-resource:latest    
+versions_tagged:   
+- gbvanrenswoude/concourse-gitlab-namespace-resource:0.0.1 initial release  
+- gbvanrenswoude/concourse-gitlab-namespace-resource:0.0.2 with support for tag filtering  
 
 ## Installing
 
