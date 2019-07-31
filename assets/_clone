@@ -1,0 +1,21 @@
+#!/bin/bash
+
+_PROJECT_LIST=$(cat projects.json | jq '.projects[] | {"path": .path, "git": .ssh_url_to_repo}')
+
+if [ $CLONE == "true" ]; then
+  mkdir ~/.ssh
+  touch ~/.ssh/config
+  BASE_URL=$(echo "$BASE_PATH" | awk -F/ '{print $3}')
+  echo -e "Host ${BASE_URL}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+  echo $_PROJECT_LIST | jq -c '.' | while read repo; do
+      THEPATH=$(echo "$repo" | jq -r ".path")
+      GIT=$(echo "$repo" | jq -r ".git")
+      if [ ! -d "$THEPATH" ]; then
+          echo "Cloning $THEPATH ( $GIT )"
+          git clone "$GIT" --quiet &
+      else
+          echo "Pulling $THEPATH"
+          (cd "$THEPATH" && git pull --quiet ) &
+      fi
+  done
+fi

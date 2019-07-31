@@ -10,102 +10,13 @@ exec 1>&2 # redirect all output to stderr for logging
 
 set +x
 
-payload=$(mktemp /tmp/resource-in.XXXXXX)
-cat > "${payload}" <&0
-### Version Configuration, unsused for now...
-CURRENT_VERSION=$(jq -r '.version.version' < $payload || true)
-### Source Configuration
-DRIVER="$(jq -r '.source.driver // "projects"' < "${payload}")"
-GITLAB_PRIVATE_TOKEN="$(jq -r '.source.token' < "${payload}")"
-PROJECT_SEARCH_PARAM="$(jq -r '.source.searchparam // ""' < "${payload}")"
-### projects driver
-NAMESPACE="$(jq -r '.source.namespace' < "${payload}")"
-BASE_PATH="$(jq -r '.source.basepath' < "${payload}")"
-### groups driver
-GROUPNAME="$(jq -r '.source.groupname' < "${payload}")"
-SUBGROUPNAME="$(jq -r '.source.subgroupname' < "${payload}")"
-EXTENDEDQUERY="$(jq -r '.source.fullquery' < "${payload}")"
-INCLSGP="$(jq -r '.source.include_subgroup_projects // "true"' < "${payload}")"
+source _base
+source _projects
 
-### Param Configuration
+### Extra Param Configuration
 CLONE="$(jq -r '.params.clone // "false"' < "${payload}")"
+source _clone
 
-if [ -z "$GITLAB_PRIVATE_TOKEN" ]; then
-    echo "Please set the variable source.token"
-    exit 1
-fi
-
-if [ $INCLSGP == "true" ]; then
-    INCLSGP="&include_subgroups=true"
-else
-    echo "Not including subgroup projects"
-    INCLSGP=""
-fi
-
-FILENAME="projects.json"
-touch $FILENAME
-
-if [ $DRIVER == "projects" ]; then
-  echo "Fetching projects in ${BASE_PATH} with projects api for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
-  curl -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=9999" | jq . > full.json
-  cat full.json | jq "map(select(.namespace.name == \"${NAMESPACE}\"))" > $FILENAME
-  rm full.json
-
-elif [ $DRIVER == "groups" ]; then
-  if  [[ "$EXTENDEDQUERY" != "null" ]];  then
-    echo "extended query set, using it.."
-    curl -k "${BASE_PATH}api/v4/groups/${EXTENDEDQUERY}?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
-
-  elif [[ "$SUBGROUPNAME" != "null" ]];  then
-    echo "subgroupname set, using it.."
-    curl -k "${BASE_PATH}api/v4/groups/${GROUPNAME}%2f${SUBGROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
-
-  elif [[  "$GROUPNAME" != "null" ]];  then
-    echo "groupname passed, querying it out"
-    curl -k "${BASE_PATH}api/v4/groups/${GROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999" | jq . > $FILENAME
-
-  else
-    echo "Please set the needed group driver variables"
-    exit 1
-  fi
-
-else
-  echo "Please set a valid gitlab api driver, projects or groups"
-  exit 1
-fi
-
-cp projects.json clonelist.json
-sed -i '1s/^/{"projects":\n/' projects.json
-echo '}' >> projects.json
-VERSION="$(md5sum projects.json| cut -d ' ' -f 1)"
-jq . projects.json | python3 -c 'import sys, yaml, json; j=json.loads(sys.stdin.read()); print(yaml.safe_dump(j))' > projects.yml
-cat projects.json | jq .projects[].path > projectlist.txt
-sed -i 's/"//g' projectlist.txt
-PROJECTLIST=$(tr '\n' ' ' < projectlist.txt)
-
-# Clone part
-cat clonelist.json | jq --compact-output --raw-output '.[] | {"path": .path, "git": .ssh_url_to_repo}' > clonelistdetails.json
-rm clonelist.json
-
-if [ $CLONE == "true" ]; then
-  mkdir ~/.ssh
-  touch ~/.ssh/config
-  BASE_URL=$(echo "$BASE_PATH" | awk -F/ '{print $3}')
-  echo -e "Host ${BASE_URL}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-  while read repo; do
-      THEPATH=$(echo "$repo" | jq -r ".path")
-      GIT=$(echo "$repo" | jq -r ".git")
-      if [ ! -d "$THEPATH" ]; then
-          echo "Cloning $THEPATH ( $GIT )"
-          git clone "$GIT" --quiet &
-      else
-          echo "Pulling $THEPATH"
-          (cd "$THEPATH" && git pull --quiet ) &
-      fi
-  done < clonelistdetails.json
-fi
-rm clonelistdetails.json
-# end
-
-result="$(jq -n "{version:{version:\"$VERSION\"}, metadata: [{name: \"projects\", value: \"$PROJECTLIST\"}]}")"
-echo "$result" | jq -s add  >&3
+PROJECTLIST=$(cat projects.json | jq -r .projects[].path | xargs)
+VERSION="$(echo $PROJECTLIST | md5sum | cut -d ' ' -f 1)"
+echo "[{\"version\":{\"version:\":\"$VERSION\"}, \"metadata\": [{\"name\": \"projects\", \"value\": \"$PROJECTLIST\"}]" | jq -s add  >&3

@@ -24,6 +24,7 @@ resources:
   type: git-group
   icon: fab
   source:
+    tag: any_project_tag
     namespace: groupname
     basepath: https://gitlab.com/
     token: ((secrettoken))
@@ -57,6 +58,7 @@ Does nothing. (for now)
 
 #### projects specific
 * `namespace`: *Required.* Specify namespace. (for example group name)
+* `tag`: *Optional.* Select only projects with this tag.
 
 #### groups specific
 * `groupname`: *Optional.* Specify groupname
