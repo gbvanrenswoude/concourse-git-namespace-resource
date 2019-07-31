@@ -1,0 +1,34 @@
+#!/bin/bash
+
+_PAYLOAD=$(mktemp /tmp/resource-in.XXXXXX)
+cat > "${_PAYLOAD}" <&0
+
+### Version Configuration, unsused for now...
+CURRENT_VERSION=$(jq -r '.version.version' < $_PAYLOAD || true)
+### Source Configuration
+DRIVER="$(jq -r '.source.driver // "projects"' < "${_PAYLOAD}")"
+GITLAB_PRIVATE_TOKEN="$(jq -r '.source.token' < "${_PAYLOAD}")"
+PROJECT_SEARCH_PARAM="$(jq -r '.source.searchparam // ""' < "${_PAYLOAD}")"
+### projects driver
+NAMESPACE="$(jq -r '.source.namespace' < "${_PAYLOAD}")"
+BASE_PATH="$(jq -r '.source.basepath' < "${_PAYLOAD}")"
+### groups driver
+GROUPNAME="$(jq -r '.source.groupname' < "${_PAYLOAD}")"
+SUBGROUPNAME="$(jq -r '.source.subgroupname' < "${_PAYLOAD}")"
+EXTENDEDQUERY="$(jq -r '.source.fullquery' < "${_PAYLOAD}")"
+INCLSGP="$(jq -r '.source.include_subgroup_projects // "true"' < "${_PAYLOAD}")"
+PROJECT_TAG="$(jq -r '.source.tag // ""' < "${_PAYLOAD}")"
+
+rm $_PAYLOAD
+
+if [ -z "$GITLAB_PRIVATE_TOKEN" ]; then
+    echo "Please set the variable source.token"
+    exit 1
+fi
+
+if [ $INCLSGP == "true" ]; then
+    INCLSGP="&include_subgroups=true"
+else
+    echo "Not including subgroup projects"
+    INCLSGP=""
+fi
