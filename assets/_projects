@@ -5,21 +5,21 @@ touch $FILENAME
 
 if [ $DRIVER == "projects" ]; then
   echo "Fetching projects in ${BASE_PATH} with projects api for search ${PROJECT_SEARCH_PARAM} and with namespace selector ${PROJECT_SELECTION} "
-  RESULT=$(curl -s "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=9999")
+  RESULT=$(curl -s -k "${BASE_PATH}api/v4/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}&per_page=9999")
   echo $RESULT | jq "map(select(.namespace.name == \"${NAMESPACE}\"))" > $FILENAME
 
 elif [ $DRIVER == "groups" ]; then
   if  [[ "$EXTENDEDQUERY" != "null" ]];  then
     echo "extended query set, using it.."
-    RESULT=$(curl -s "${BASE_PATH}api/v4/groups/${EXTENDEDQUERY}?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999")
+    RESULT=$(curl -s -k "${BASE_PATH}api/v4/groups/${EXTENDEDQUERY}?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999")
 
   elif [[ "$SUBGROUPNAME" != "null" ]];  then
     echo "subgroupname set, using it.."
-    RESULT=$(curl -s "${BASE_PATH}api/v4/groups/${GROUPNAME}%2f${SUBGROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999")
+    RESULT=$(curl -s -k "${BASE_PATH}api/v4/groups/${GROUPNAME}%2f${SUBGROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999")
 
   elif [[  "$GROUPNAME" != "null" ]];  then
     echo "groupname passed, querying it out"
-    RESULT=$(curl -s "${BASE_PATH}api/v4/groups/${GROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999")
+    RESULT=$(curl -s -k "${BASE_PATH}api/v4/groups/${GROUPNAME}/projects?private_token=${GITLAB_PRIVATE_TOKEN}&search=${PROJECT_SEARCH_PARAM}${INCLSGP}&per_page=9999")
 
   else
     echo "Please set the needed group driver variables"
