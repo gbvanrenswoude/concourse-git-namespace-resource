@@ -2,17 +2,16 @@
 
 set -ex
 
-# make sure to be in the resource dir
-cd "${1}"
+DIR=$(dirname "$0")
 
 exec 3>&1 # make stdout available as fd 3 for the result
 exec 1>&2 # redirect all output to stderr for logging
 
 set +x
 
-source _base
-source _projects
+source $DIR/_base
+source $DIR/_projects
 
 PROJECTLIST=$(cat projects.json | jq -r .projects[].path | xargs)
 VERSION="$(echo $PROJECTLIST | md5sum | cut -d ' ' -f 1)"
-echo "[{ \"version\": \"$VERSION\", \"metadata\": \"$PROJECTLIST\"}]" | jq -s add  >&3
+echo $VERSION | jq -R '.' | jq -s "map({md5: .})" >&3

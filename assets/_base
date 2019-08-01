@@ -18,6 +18,7 @@ SUBGROUPNAME="$(jq -r '.source.subgroupname' < "${_PAYLOAD}")"
 EXTENDEDQUERY="$(jq -r '.source.fullquery' < "${_PAYLOAD}")"
 INCLSGP="$(jq -r '.source.include_subgroup_projects // "true"' < "${_PAYLOAD}")"
 PROJECT_TAG="$(jq -r '.source.tag // ""' < "${_PAYLOAD}")"
+CLONE="$(jq -r '.params.clone // "false"' < "${_PAYLOAD}")"
 
 rm $_PAYLOAD
 

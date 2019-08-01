@@ -37,6 +37,5 @@ if [ ! -z "$PROJECT_TAG" ]; then
 fi
 
 echo "{\"projects\":${RESULT}}" > $FILENAME
-
 # keeping this as is.
 cat $FILENAME | python3 -c 'import sys, yaml, json; j=json.loads(sys.stdin.read()); print(yaml.safe_dump(j))' > projects.yml
